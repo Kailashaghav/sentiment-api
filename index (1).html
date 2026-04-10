@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SentimentLens Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --card: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #6c63ff;
+    --accent2: #00d4aa;
+    --accent3: #ff6584;
+    --text: #e8e8f0;
+    --muted: #7070a0;
+    --positive: #00d4aa;
+    --negative: #ff6584;
+    --neutral: #ffd93d;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 2rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%,100% { opacity:1; transform:scale(1); }
+    50% { opacity:0.6; transform:scale(1.3); }
+  }
+
+  .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-family: 'JetBrains Mono', monospace;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--muted);
+    transition: all 0.3s;
+  }
+
+  .status-badge.connected {
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--muted);
+  }
+
+  .status-badge.connected .status-dot {
+    background: var(--accent2);
+    box-shadow: 0 0 8px var(--accent2);
+  }
+
+  /* LAYOUT */
+  .container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  /* SIDEBAR */
+  .sidebar { display: flex; flex-direction: column; gap: 1.2rem; }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+  }
+
+  .card-title {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  /* API CONNECTION */
+  .input-group { display: flex; flex-direction: column; gap: 10px; }
+
+  input[type="text"], input[type="password"] {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+  }
+
+  input:focus { border-color: var(--accent); }
+
+  .btn {
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: none;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #7d75ff; transform: translateY(-1px); }
+
+  .btn-success {
+    background: var(--accent2);
+    color: #000;
+  }
+  .btn-success:hover { background: #00e8bb; transform: translateY(-1px); }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  /* ANALYZE SECTION */
+  textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.9rem;
+    resize: vertical;
+    min-height: 100px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { border-color: var(--accent); }
+
+  .brand-input {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .brand-input input { flex: 1; }
+
+  /* RESULT BADGE */
+  .result-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    margin-top: 1rem;
+    font-weight: 600;
+    font-size: 1rem;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: all 0.3s;
+  }
+
+  .result-badge.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .result-badge.positive { background: rgba(0,212,170,0.12); border: 1px solid var(--positive); color: var(--positive); }
+  .result-badge.negative { background: rgba(255,101,132,0.12); border: 1px solid var(--negative); color: var(--negative); }
+  .result-badge.neutral  { background: rgba(255,217,61,0.12);  border: 1px solid var(--neutral);  color: var(--neutral); }
+  .result-badge.error    { background: rgba(255,101,132,0.08); border: 1px solid #ff3355; color: #ff3355; }
+
+  .confidence-bar {
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border);
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .confidence-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--accent2);
+    width: 0;
+    transition: width 0.6s ease;
+  }
+
+  /* MAIN PANEL */
+  .main-panel { display: flex; flex-direction: column; gap: 1.5rem; }
+
+  /* STATS ROW */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.2rem 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .stat-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: -1px;
+  }
+
+  .stat-value.positive { color: var(--positive); }
+  .stat-value.negative { color: var(--negative); }
+  .stat-value.accent   { color: var(--accent); }
+  .stat-value.neutral  { color: var(--neutral); }
+
+  /* CHARTS GRID */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.2rem;
+  }
+
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+  }
+
+  .chart-card canvas {
+    max-height: 220px;
+  }
+
+  /* HISTORY TABLE */
+  .history-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+  }
+
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+  }
+
+  th {
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(42,42,58,0.5);
+    color: var(--text);
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  .pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+
+  .pill.positive { background: rgba(0,212,170,0.15); color: var(--positive); }
+  .pill.negative { background: rgba(255,101,132,0.15); color: var(--negative); }
+  .pill.neutral  { background: rgba(255,217,61,0.15);  color: var(--neutral); }
+
+  .tweet-text {
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  /* LOADING SPINNER */
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.2);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  /* TOAST */
+  #toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s;
+    z-index: 999;
+    pointer-events: none;
+  }
+
+  #toast.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  #toast.success { background: rgba(0,212,170,0.15); border: 1px solid var(--accent2); color: var(--accent2); }
+  #toast.error   { background: rgba(255,101,132,0.15); border: 1px solid var(--negative); color: var(--negative); }
+  #toast.info    { background: rgba(108,99,255,0.15); border: 1px solid var(--accent); color: var(--accent); }
+
+  @media (max-width: 900px) {
+    .container { grid-template-columns: 1fr; }
+    .stats-row { grid-template-columns: repeat(2,1fr); }
+    .charts-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    SentimentLens Pro
+  </div>
+  <div class="status-badge" id="statusBadge">
+    <div class="status-dot"></div>
+    <span id="statusText">Not connected</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <!-- API Connection -->
+    <div class="card">
+      <div class="card-title">API Connection</div>
+      <div class="input-group">
+        <input type="text" id="apiUrl" value="http://localhost:8000" placeholder="http://localhost:8000"/>
+        <button class="btn btn-primary" onclick="connectAPI()">
+          <div class="spinner" id="connectSpinner"></div>
+          Connect
+        </button>
+      </div>
+    </div>
+
+    <!-- Analyze Tweet -->
+    <div class="card">
+      <div class="card-title">Analyze Text</div>
+      <textarea id="tweetInput" placeholder="Type any tweet or sentence to analyze...">I love this product, it's absolutely amazing!</textarea>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-success" style="flex:1" onclick="analyzeTweet()">
+          <div class="spinner" id="analyzeSpinner"></div>
+          Analyze
+        </button>
+        <button class="btn btn-outline" onclick="clearInput()">Clear</button>
+      </div>
+      <div class="result-badge" id="resultBadge"></div>
+      <div class="confidence-bar" id="confBar" style="display:none">
+        <div class="confidence-fill" id="confFill"></div>
+      </div>
+    </div>
+
+    <!-- Brand Tracker -->
+    <div class="card">
+      <div class="card-title">Brand Tracker</div>
+      <div class="brand-input">
+        <input type="text" id="brandInput" placeholder="e.g. apple, nike, tesla"/>
+        <button class="btn btn-primary" onclick="trackBrand()">
+          <div class="spinner" id="brandSpinner"></div>
+          Track
+        </button>
+      </div>
+      <div id="brandResult" style="font-size:0.82rem;color:var(--muted);margin-top:8px"></div>
+    </div>
+
+  </div>
+
+  <!-- MAIN PANEL -->
+  <div class="main-panel">
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total Analyzed</div>
+        <div class="stat-value accent" id="statTotal">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Positive</div>
+        <div class="stat-value positive" id="statPos">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Negative</div>
+        <div class="stat-value negative" id="statNeg">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Confidence</div>
+        <div class="stat-value neutral" id="statConf">—</div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts-grid">
+      <div class="chart-card">
+        <div class="card-title">Sentiment Distribution</div>
+        <canvas id="pieChart"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="card-title">Confidence Over Time</div>
+        <canvas id="lineChart"></canvas>
+      </div>
+    </div>
+
+    <!-- History -->
+    <div class="history-card">
+      <div class="history-header">
+        <div class="card-title" style="margin:0">Analysis History</div>
+        <button class="btn btn-outline" style="padding:6px 14px;font-size:0.78rem" onclick="clearHistory()">Clear</button>
+      </div>
+      <div id="historyBody">
+        <div class="empty-state">No analyses yet — connect your API and analyze a tweet above.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────
+let apiBase = 'http://localhost:8000';
+let isConnected = false;
+let history = [];
+let pieChart, lineChart;
+
+// ─── CHARTS INIT ──────────────────────────────────────────────
+function initCharts() {
+  const pieCtx = document.getElementById('pieChart').getContext('2d');
+  pieChart = new Chart(pieCtx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Positive', 'Negative', 'Neutral'],
+      datasets: [{
+        data: [0, 0, 0],
+        backgroundColor: ['#00d4aa', '#ff6584', '#ffd93d'],
+        borderColor: '#1a1a24',
+        borderWidth: 3,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          labels: { color: '#7070a0', font: { family: 'Space Grotesk', size: 12 }, padding: 16 }
+        }
+      },
+      cutout: '65%'
+    }
+  });
+
+  const lineCtx = document.getElementById('lineChart').getContext('2d');
+  lineChart = new Chart(lineCtx, {
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: [{
+        label: 'Confidence %',
+        data: [],
+        borderColor: '#6c63ff',
+        backgroundColor: 'rgba(108,99,255,0.08)',
+        borderWidth: 2,
+        pointBackgroundColor: '#6c63ff',
+        pointRadius: 4,
+        tension: 0.4,
+        fill: true
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: {
+        x: { ticks: { color: '#7070a0', font: { size: 10 } }, grid: { color: '#2a2a3a' } },
+        y: {
+          min: 0, max: 100,
+          ticks: { color: '#7070a0', font: { size: 10 }, callback: v => v + '%' },
+          grid: { color: '#2a2a3a' }
+        }
+      },
+      plugins: { legend: { display: false } }
+    }
+  });
+}
+
+// ─── CONNECT ──────────────────────────────────────────────────
+async function connectAPI() {
+  apiBase = document.getElementById('apiUrl').value.trim().replace(/\/$/, '');
+  showSpinner('connectSpinner', true);
+  try {
+    const res = await fetch(apiBase + '/health', { signal: AbortSignal.timeout(5000) });
+    if (res.ok) {
+      isConnected = true;
+      setStatus(true);
+      toast('Connected to ' + apiBase, 'success');
+    } else {
+      throw new Error('Server returned ' + res.status);
+    }
+  } catch (e) {
+    // Try root endpoint as fallback
+    try {
+      const res2 = await fetch(apiBase + '/', { signal: AbortSignal.timeout(4000) });
+      if (res2.ok || res2.status === 200) {
+        isConnected = true;
+        setStatus(true);
+        toast('Connected to ' + apiBase, 'success');
+      } else { throw new Error('Not reachable'); }
+    } catch {
+      isConnected = false;
+      setStatus(false);
+      toast('Cannot reach ' + apiBase + ' — is the backend running?', 'error');
+    }
+  }
+  showSpinner('connectSpinner', false);
+}
+
+function setStatus(connected) {
+  const badge = document.getElementById('statusBadge');
+  const text  = document.getElementById('statusText');
+  badge.className = 'status-badge' + (connected ? ' connected' : '');
+  text.textContent = connected ? apiBase.replace('http://','') : 'Not connected';
+}
+
+// ─── ANALYZE ──────────────────────────────────────────────────
+async function analyzeTweet() {
+  const text = document.getElementById('tweetInput').value.trim();
+  if (!text) { toast('Please enter some text to analyze', 'error'); return; }
+
+  showSpinner('analyzeSpinner', true);
+  const badge = document.getElementById('resultBadge');
+  badge.className = 'result-badge';
+  badge.textContent = '';
+
+  try {
+    let result;
+    if (isConnected) {
+      const res = await fetch(apiBase + '/predict', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+        signal: AbortSignal.timeout(8000)
+      });
+      if (!res.ok) throw new Error('API returned ' + res.status);
+      result = await res.json();
+    } else {
+      // Offline demo mode
+      result = demoPredict(text);
+      toast('Demo mode (API not connected)', 'info');
+    }
+
+    showResult(result, text);
+    addToHistory(text, result);
+    updateStats();
+    updateCharts();
+
+  } catch (e) {
+    badge.className = 'result-badge error show';
+    badge.textContent = 'API Error: ' + e.message;
+    toast('Analysis failed: ' + e.message, 'error');
+  }
+  showSpinner('analyzeSpinner', false);
+}
+
+function demoPredict(text) {
+  const pos = ['love','great','amazing','awesome','excellent','good','happy','best','fantastic','wonderful'];
+  const neg = ['hate','terrible','awful','bad','worst','horrible','poor','disappointing','broken','failed'];
+  const t = text.toLowerCase();
+  let ps = pos.filter(w => t.includes(w)).length;
+  let ns = neg.filter(w => t.includes(w)).length;
+  const sentiment = ps > ns ? 'POSITIVE' : ns > ps ? 'NEGATIVE' : 'NEUTRAL';
+  const confidence = 0.55 + Math.random() * 0.38;
+  return { sentiment, confidence: parseFloat(confidence.toFixed(3)), label: sentiment };
+}
+
+function showResult(result, text) {
+  const badge  = document.getElementById('resultBadge');
+  const bar    = document.getElementById('confBar');
+  const fill   = document.getElementById('confFill');
+  const sent   = (result.sentiment || result.label || 'NEUTRAL').toUpperCase();
+  const conf   = result.confidence ? Math.round(result.confidence * 100) : 75;
+  const icons  = { POSITIVE: '😊', NEGATIVE: '😞', NEUTRAL: '😐' };
+  const cls    = sent.toLowerCase();
+
+  badge.className = 'result-badge ' + cls + ' show';
+  badge.innerHTML = (icons[sent]||'🔍') + ' ' + sent + ' &nbsp;<span style="font-weight:400;font-size:0.85rem;opacity:0.75">' + conf + '% confidence</span>';
+
+  bar.style.display = 'block';
+  setTimeout(() => { fill.style.width = conf + '%'; }, 50);
+}
+
+// ─── BRAND TRACKER ────────────────────────────────────────────
+async function trackBrand() {
+  const brand = document.getElementById('brandInput').value.trim();
+  if (!brand) { toast('Enter a brand name', 'error'); return; }
+
+  showSpinner('brandSpinner', true);
+  const el = document.getElementById('brandResult');
+  el.innerHTML = '<span style="color:var(--muted)">Analyzing...</span>';
+
+  try {
+    let result;
+    if (isConnected) {
+      const res = await fetch(apiBase + '/brand?keyword=' + encodeURIComponent(brand), {
+        signal: AbortSignal.timeout(15000)
+      });
+      if (!res.ok) throw new Error('Brand API returned ' + res.status);
+      result = await res.json();
+    } else {
+      await new Promise(r => setTimeout(r, 800));
+      const pos = Math.floor(Math.random() * 60 + 30);
+      result = { brand, total: 500, positive: pos, negative: 100-pos, score: pos };
+    }
+
+    const score = result.score || result.reputation_score || 0;
+    const color = score >= 60 ? 'var(--positive)' : score >= 40 ? 'var(--neutral)' : 'var(--negative)';
+    el.innerHTML =
+      '<div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">' +
+      '<div style="font-size:0.82rem;color:var(--muted)">Brand: <span style="color:var(--text);font-weight:600">' + brand.toUpperCase() + '</span></div>' +
+      '<div style="font-size:0.82rem;color:var(--muted)">Mentions: ' + (result.total||500) + '</div>' +
+      '<div style="font-size:0.82rem">Reputation: <span style="color:' + color + ';font-weight:700;font-size:1.1rem">' + score + '/100</span></div>' +
+      '<div style="height:4px;background:var(--border);border-radius:2px;margin-top:4px"><div style="height:100%;width:' + score + '%;background:' + color + ';border-radius:2px;transition:width 0.6s"></div></div>' +
+      '</div>';
+    toast('Brand analysis complete', 'success');
+  } catch (e) {
+    el.innerHTML = '<span style="color:var(--negative)">Error: ' + e.message + '</span>';
+  }
+  showSpinner('brandSpinner', false);
+}
+
+// ─── HISTORY ──────────────────────────────────────────────────
+function addToHistory(text, result) {
+  const sent = (result.sentiment || result.label || 'NEUTRAL').toUpperCase();
+  const conf = result.confidence ? Math.round(result.confidence * 100) : 75;
+  history.unshift({ text, sent, conf, time: new Date().toLocaleTimeString() });
+  if (history.length > 50) history.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  const el = document.getElementById('historyBody');
+  if (!history.length) {
+    el.innerHTML = '<div class="empty-state">No analyses yet.</div>';
+    return;
+  }
+  el.innerHTML =
+    '<table><thead><tr>' +
+    '<th>Time</th><th>Tweet</th><th>Sentiment</th><th>Confidence</th>' +
+    '</tr></thead><tbody>' +
+    history.map(h =>
+      '<tr>' +
+      '<td style="color:var(--muted);font-family:JetBrains Mono,monospace;font-size:0.75rem">' + h.time + '</td>' +
+      '<td><div class="tweet-text">' + h.text + '</div></td>' +
+      '<td><span class="pill ' + h.sent.toLowerCase() + '">' + h.sent + '</span></td>' +
+      '<td style="font-family:JetBrains Mono,monospace;font-size:0.82rem">' + h.conf + '%</td>' +
+      '</tr>'
+    ).join('') +
+    '</tbody></table>';
+}
+
+function clearHistory() {
+  history = [];
+  renderHistory();
+  updateStats();
+  updateCharts();
+}
+
+// ─── STATS & CHARTS ───────────────────────────────────────────
+function updateStats() {
+  const total = history.length;
+  const pos   = history.filter(h => h.sent === 'POSITIVE').length;
+  const neg   = history.filter(h => h.sent === 'NEGATIVE').length;
+  const avg   = total ? Math.round(history.reduce((a,h) => a+h.conf, 0) / total) : 0;
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statPos').textContent   = pos;
+  document.getElementById('statNeg').textContent   = neg;
+  document.getElementById('statConf').textContent  = total ? avg + '%' : '—';
+}
+
+function updateCharts() {
+  const pos = history.filter(h => h.sent === 'POSITIVE').length;
+  const neg = history.filter(h => h.sent === 'NEGATIVE').length;
+  const neu = history.filter(h => h.sent === 'NEUTRAL').length;
+
+  pieChart.data.datasets[0].data = [pos, neg, neu];
+  pieChart.update();
+
+  const last20 = history.slice(0, 20).reverse();
+  lineChart.data.labels   = last20.map((_, i) => '#' + (i+1));
+  lineChart.data.datasets[0].data = last20.map(h => h.conf);
+  lineChart.update();
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────
+function clearInput() {
+  document.getElementById('tweetInput').value = '';
+  document.getElementById('resultBadge').className = 'result-badge';
+  document.getElementById('confBar').style.display = 'none';
+  document.getElementById('confFill').style.width = '0';
+}
+
+function showSpinner(id, show) {
+  document.getElementById(id).style.display = show ? 'block' : 'none';
+}
+
+function toast(msg, type='info') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show ' + type;
+  clearTimeout(el._t);
+  el._t = setTimeout(() => { el.className = 'toast'; }, 3200);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────
+initCharts();
+</script>
+</body>
+</html>
