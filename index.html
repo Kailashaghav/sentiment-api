@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SentimentLens Pro</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* CONTAINER */
+.container {
+    background: rgba(255,255,255,0.1);
+    padding: 30px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    width: 420px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+h1 { margin-bottom: 10px; }
+
+input {
+    width: 90%;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+}
+
+button {
+    padding: 10px 15px;
+    margin: 5px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    background: #00c6ff;
+    color: white;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #0072ff;
+}
+
+#status { font-weight: bold; }
+#result { margin-top: 15px; font-size: 20px; }
+
+canvas {
+    margin-top: 20px;
+    background: white;
+    border-radius: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>💡 SentimentLens Pro</h1>
+
+<!-- LOGIN -->
+<input type="text" id="username" placeholder="Username">
+<input type="password" id="password" placeholder="Password">
+<button onclick="login()">🔐 Login</button>
+
+<hr>
+
+<!-- CONNECT -->
+<input type="text" id="apiUrl" value="http://localhost:8000">
+<br>
+<button onclick="connect()">🔌 Connect</button>
+<p id="status">🔴 Not Connected</p>
+
+<hr>
+
+<!-- INPUT -->
+<input type="text" id="text" placeholder="Type or speak text...">
+<br>
+<button onclick="startVoice()">🎙 Speak</button>
+<button onclick="analyze()">📊 Analyze</button>
+
+<h2 id="result"></h2>
+
+<!-- CHART -->
+<canvas id="chart" width="300" height="200"></canvas>
+
+</div>
+
+<script>
+let API_URL = "";
+let chart;
+let positive = 0, negative = 0, neutral = 0;
+
+/* LOGIN */
+function login() {
+    let user = document.getElementById("username").value;
+    let pass = document.getElementById("password").value;
+
+    if (user === "admin" && pass === "1234") {
+        alert("✅ Login Successful");
+    } else {
+        alert("❌ Invalid Credentials");
+    }
+}
+
+/* CONNECT */
+function connect() {
+    API_URL = document.getElementById("apiUrl").value;
+    document.getElementById("status").innerText = "🟢 Connected to " + API_URL;
+}
+
+/* VOICE INPUT */
+function startVoice() {
+    let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+
+    recognition.onresult = function(event) {
+        document.getElementById("text").value = event.results[0][0].transcript;
+    };
+
+    recognition.start();
+}
+
+/* ANALYZE */
+async function analyze() {
+    let text = document.getElementById("text").value;
+
+    if (!API_URL) {
+        alert("⚠️ Please connect API first");
+        return;
+    }
+
+    try {
+        // LOCATION
+        navigator.geolocation.getCurrentPosition(pos => {
+            console.log("Lat:", pos.coords.latitude);
+            console.log("Lon:", pos.coords.longitude);
+        });
+
+        let response = await fetch(API_URL + "/predict", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                text: text,
+                location: "India"
+            })
+        });
+
+        let data = await response.json();
+
+        let resultBox = document.getElementById("result");
+
+        if (data.sentiment === "positive") {
+            positive++;
+            resultBox.innerText = "😊 Positive";
+        } else if (data.sentiment === "negative") {
+            negative++;
+            resultBox.innerText = "😡 Negative";
+        } else {
+            neutral++;
+            resultBox.innerText = "😐 Neutral";
+        }
+
+        updateChart();
+
+    } catch (error) {
+        document.getElementById("result").innerText = "❌ API Error";
+    }
+}
+
+/* CHART */
+function updateChart() {
+    const ctx = document.getElementById('chart').getContext('2d');
+
+    if (chart) chart.destroy();
+
+    chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ['Positive', 'Negative', 'Neutral'],
+            datasets: [{
+                label: 'Sentiment Count',
+                data: [positive, negative, neutral]
+            }]
+        }
+    });
+}
+</script>
+
+</body>
+</html>
