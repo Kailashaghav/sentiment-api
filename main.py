@@ -30,19 +30,19 @@ vectorizer = None
 def load_model():
     global model, vectorizer
     if not os.path.exists(MODEL_PATH):
-        print("⬇️  Downloading model from Google Drive...")
+        print("Downloading model from Google Drive...")
         try:
             gdown.download(MODEL_URL, MODEL_PATH, fuzzy=True, quiet=False)
         except Exception as e:
-            print(f"❌ Download failed: {e}")
+            print(f"Download failed: {e}")
     if os.path.exists(MODEL_PATH):
         with open(MODEL_PATH, "rb") as f:
             bundle = pickle.load(f)
         model      = bundle["model"]
         vectorizer = bundle["vectorizer"]
-        print("✅ Model loaded!")
+        print("Model loaded successfully!")
     else:
-        print("⚠️  Model file not found.")
+        print("Model file not found after download attempt.")
 
 def clean_tweet(text: str) -> str:
     text = str(text).lower()
@@ -67,7 +67,7 @@ class BrandRequest(BaseModel):
 
 @app.get("/")
 def root():
-    return {"status": "ok", "message": "Brand Sentiment API is running 🚀"}
+    return {"status": "ok", "message": "Brand Sentiment API is running"}
 
 @app.get("/health")
 def health():
