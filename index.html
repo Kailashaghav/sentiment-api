@@ -2,309 +2,324 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>SentimentLens Pro</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
-  :root{--bg:#0a0a0f;--surface:#13131a;--card:#1a1a24;--border:#2a2a3a;--accent:#6c63ff;--accent2:#00d4aa;--text:#e8e8f0;--muted:#7070a0;--positive:#00d4aa;--negative:#ff6584;--neutral:#ffd93d}
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root{--bg:#0a0a0f;--surface:#13131a;--card:#1a1a24;--border:#2a2a3a;--accent:#6c63ff;--accent2:#00d4aa;--text:#e8e8f0;--muted:#7070a0;--pos:#00d4aa;--neg:#ff6584;--neu:#ffd93d}
   *{margin:0;padding:0;box-sizing:border-box}
   body{font-family:'Space Grotesk',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
   header{display:flex;align-items:center;justify-content:space-between;padding:1.2rem 2rem;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100}
-  .logo{display:flex;align-items:center;gap:10px;font-size:1.25rem;font-weight:700}
-  .logo-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);animation:pulse 2s ease-in-out infinite}
-  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
-  .status-badge{display:flex;align-items:center;gap:6px;font-size:.78rem;font-family:'JetBrains Mono',monospace;padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--muted);transition:all .3s}
-  .status-badge.connected{border-color:var(--accent2);color:var(--accent2)}
-  .status-dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
-  .status-badge.connected .status-dot{background:var(--accent2);box-shadow:0 0 8px var(--accent2)}
-  .container{max-width:1300px;margin:0 auto;padding:2rem;display:grid;grid-template-columns:340px 1fr;gap:1.5rem;align-items:start}
+  .logo{display:flex;align-items:center;gap:10px;font-size:1.2rem;font-weight:700}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent);animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.3);opacity:.6}}
+  .badge{display:flex;align-items:center;gap:6px;font-size:.78rem;font-family:'JetBrains Mono',monospace;padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--muted)}
+  .badge.on{border-color:var(--pos);color:var(--pos)}
+  .bdot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+  .badge.on .bdot{background:var(--pos);box-shadow:0 0 8px var(--pos)}
+  .wrap{max-width:1300px;margin:0 auto;padding:2rem;display:grid;grid-template-columns:360px 1fr;gap:1.5rem;align-items:start}
   .sidebar{display:flex;flex-direction:column;gap:1.2rem}
   .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem}
-  .card-title{font-size:.72rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
-  .url-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:.73rem;color:var(--accent2);word-break:break-all;margin-bottom:10px}
+  .ct{font-size:.72rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+  .urlbox{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--accent2);word-break:break-all;margin-bottom:10px}
   .btn{padding:10px 18px;border-radius:10px;border:none;font-family:'Space Grotesk',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;width:100%}
-  .btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#7d75ff;transform:translateY(-1px)}
-  .btn-success{background:var(--accent2);color:#000;font-weight:700}.btn-success:hover{background:#00e8bb;transform:translateY(-1px)}
-  .btn-sm{background:transparent;color:var(--text);border:1px solid var(--border);width:auto;padding:8px 14px;font-size:.78rem}.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
-  textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:.9rem;resize:vertical;min-height:100px;outline:none;transition:border-color .2s}
-  textarea:focus{border-color:var(--accent)}
-  input[type=text]{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.82rem;outline:none;transition:border-color .2s;width:100%}
-  input:focus{border-color:var(--accent)}
-  .result-badge{display:flex;align-items:center;gap:10px;padding:14px 18px;border-radius:12px;margin-top:1rem;font-weight:600;font-size:1rem;opacity:0;transform:translateY(8px);transition:all .3s}
-  .result-badge.show{opacity:1;transform:translateY(0)}
-  .result-badge.positive{background:rgba(0,212,170,.12);border:1px solid var(--positive);color:var(--positive)}
-  .result-badge.negative{background:rgba(255,101,132,.12);border:1px solid var(--negative);color:var(--negative)}
-  .result-badge.neutral{background:rgba(255,217,61,.12);border:1px solid var(--neutral);color:var(--neutral)}
-  .result-badge.error{background:rgba(255,80,80,.08);border:1px solid #ff3355;color:#ff5566;font-size:.83rem}
-  .conf-bar{height:4px;border-radius:2px;background:var(--border);margin-top:8px;overflow:hidden;display:none}
-  .conf-fill{height:100%;border-radius:2px;background:var(--accent2);width:0;transition:width .6s ease}
-  .main-panel{display:flex;flex-direction:column;gap:1.5rem}
-  .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
-  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.2rem 1.4rem;display:flex;flex-direction:column;gap:6px}
-  .stat-label{font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
-  .stat-value{font-size:1.8rem;font-weight:700;font-family:'JetBrains Mono',monospace;letter-spacing:-1px}
-  .stat-value.positive{color:var(--positive)}.stat-value.negative{color:var(--negative)}.stat-value.accent{color:var(--accent)}.stat-value.neutral{color:var(--neutral)}
-  .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
-  .chart-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem}
-  .chart-card canvas{max-height:220px}
-  .history-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem}
-  .history-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+  .bp{background:var(--accent);color:#fff}.bp:hover{background:#7d75ff;transform:translateY(-1px)}
+  .bs{background:var(--pos);color:#000;font-weight:700}.bs:hover{background:#00e8bb;transform:translateY(-1px)}
+  .bsm{background:transparent;color:var(--text);border:1px solid var(--border);width:auto;padding:8px 14px;font-size:.78rem}.bsm:hover{border-color:var(--accent);color:var(--accent)}
+  textarea,input[type=text]{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:.9rem;outline:none;transition:border-color .2s}
+  textarea{resize:vertical;min-height:90px}
+  input[type=text]{font-family:'JetBrains Mono',monospace;font-size:.82rem}
+  textarea:focus,input:focus{border-color:var(--accent)}
+  .rbadge{display:flex;align-items:center;gap:10px;padding:14px 18px;border-radius:12px;margin-top:1rem;font-weight:600;opacity:0;transform:translateY(8px);transition:all .3s}
+  .rbadge.show{opacity:1;transform:translateY(0)}
+  .rbadge.positive{background:rgba(0,212,170,.12);border:1px solid var(--pos);color:var(--pos)}
+  .rbadge.negative{background:rgba(255,101,132,.12);border:1px solid var(--neg);color:var(--neg)}
+  .rbadge.err{background:rgba(255,80,80,.08);border:1px solid #f55;color:#f77;font-size:.82rem}
+  .cbar{height:4px;border-radius:2px;background:var(--border);margin-top:8px;overflow:hidden;display:none}
+  .cfill{height:100%;border-radius:2px;background:var(--accent2);width:0;transition:width .6s ease}
+  .main{display:flex;flex-direction:column;gap:1.5rem}
+  .srow{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+  .sc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.2rem 1.4rem}
+  .sl{font-size:.72rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .sv{font-size:1.8rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+  .sv.a{color:var(--accent)}.sv.p{color:var(--pos)}.sv.n{color:var(--neg)}.sv.u{color:var(--neu)}
+  .cgrid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+  .cc{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem}
+  .cc canvas{max-height:220px}
+  .hcard{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem}
   table{width:100%;border-collapse:collapse;font-size:.85rem}
   th{text-align:left;padding:8px 12px;font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border)}
-  td{padding:10px 12px;border-bottom:1px solid rgba(42,42,58,.5);color:var(--text);vertical-align:middle}
+  td{padding:10px 12px;border-bottom:1px solid rgba(42,42,58,.5);vertical-align:middle}
   tr:last-child td{border-bottom:none}
   .pill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:600}
-  .pill.positive{background:rgba(0,212,170,.15);color:var(--positive)}.pill.negative{background:rgba(255,101,132,.15);color:var(--negative)}.pill.neutral{background:rgba(255,217,61,.15);color:var(--neutral)}
-  .tweet-cell{max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--muted)}
-  .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  .empty{text-align:center;padding:3rem;color:var(--muted);font-size:.88rem;line-height:1.9}
-  #toast{position:fixed;bottom:2rem;right:2rem;padding:12px 20px;border-radius:12px;font-size:.85rem;font-weight:500;opacity:0;transform:translateY(10px);transition:all .3s;z-index:999;pointer-events:none;max-width:320px}
+  .pill.positive{background:rgba(0,212,170,.15);color:var(--pos)}
+  .pill.negative{background:rgba(255,101,132,.15);color:var(--neg)}
+  .tc{max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--muted)}
+  .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;border-radius:50%;animation:sp .6s linear infinite;display:none}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .empty{text-align:center;padding:3rem;color:var(--muted);font-size:.88rem;line-height:2}
+  #toast{position:fixed;bottom:2rem;right:2rem;padding:12px 20px;border-radius:12px;font-size:.85rem;font-weight:500;opacity:0;transform:translateY(10px);transition:all .3s;z-index:999;pointer-events:none}
   #toast.show{opacity:1;transform:translateY(0)}
-  #toast.success{background:rgba(0,212,170,.15);border:1px solid var(--accent2);color:var(--accent2)}
-  #toast.error{background:rgba(255,101,132,.15);border:1px solid var(--negative);color:var(--negative)}
-  #toast.info{background:rgba(108,99,255,.15);border:1px solid var(--accent);color:var(--accent)}
-  .brand-row{display:flex;gap:8px;margin-bottom:10px}
-  .brand-row input{flex:1}.brand-row .btn{width:auto;padding:10px 14px}
-  .brand-stats{display:flex;flex-direction:column;gap:7px;margin-top:6px}
-  .brand-row-stat{display:flex;justify-content:space-between;font-size:.82rem}
-  @media(max-width:900px){.container{grid-template-columns:1fr}.stats-row{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}}
+  #toast.s{background:rgba(0,212,170,.15);border:1px solid var(--pos);color:var(--pos)}
+  #toast.e{background:rgba(255,101,132,.15);border:1px solid var(--neg);color:var(--neg)}
+  #toast.i{background:rgba(108,99,255,.15);border:1px solid var(--accent);color:var(--accent)}
+  .brow{display:flex;gap:8px;margin-bottom:10px}
+  .brow input{flex:1}.brow .btn{width:auto;padding:10px 14px}
+  .bstats{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+  .bstat{display:flex;justify-content:space-between;font-size:.82rem;padding:4px 0;border-bottom:1px solid var(--border)}
+  .bstat:last-child{border:none}
+  .ttarea{margin-top:8px}
+  .ttlabel{font-size:.7rem;color:var(--muted);margin-bottom:4px;font-family:'JetBrains Mono',monospace}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr}.srow{grid-template-columns:repeat(2,1fr)}.cgrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <header>
-  <div class="logo"><div class="logo-dot"></div>SentimentLens Pro</div>
-  <div class="status-badge" id="statusBadge">
-    <div class="status-dot"></div>
-    <span id="statusText">Connecting...</span>
-  </div>
+  <div class="logo"><div class="dot"></div>SentimentLens Pro</div>
+  <div class="badge" id="badge"><div class="bdot"></div><span id="btext">Connecting...</span></div>
 </header>
-<div class="container">
+
+<div class="wrap">
   <div class="sidebar">
+
+    <!-- Connection -->
     <div class="card">
-      <div class="card-title">Railway Backend</div>
-      <div class="url-box">https://web-production-53c4b.up.railway.app</div>
-      <button class="btn btn-primary" onclick="pingBackend()">
-        <div class="spinner" id="pingSpinner"></div>Test Connection
-      </button>
+      <div class="ct">Backend Status</div>
+      <div class="urlbox">web-production-53c4b.up.railway.app</div>
+      <button class="btn bp" onclick="ping()"><div class="spin" id="ps"></div>Test Connection</button>
     </div>
+
+    <!-- Analyze -->
     <div class="card">
-      <div class="card-title">Analyze Text</div>
-      <textarea id="tweetInput" placeholder="Type any tweet or sentence...">I love this product, it is absolutely amazing!</textarea>
+      <div class="ct">Analyze Tweet</div>
+      <textarea id="tin" placeholder="Type any tweet or sentence...">I love this product, it is absolutely amazing!</textarea>
       <div style="display:flex;gap:8px;margin-top:10px">
-        <button class="btn btn-success" style="flex:1" onclick="analyzeTweet()">
-          <div class="spinner" id="analyzeSpinner"></div>Analyze
-        </button>
-        <button class="btn btn-sm" onclick="clearInput()">Clear</button>
+        <button class="btn bs" style="flex:1" onclick="analyze()"><div class="spin" id="as"></div>Analyze</button>
+        <button class="btn bsm" onclick="clearIn()">Clear</button>
       </div>
-      <div class="result-badge" id="resultBadge"></div>
-      <div class="conf-bar" id="confBar"><div class="conf-fill" id="confFill"></div></div>
+      <div class="rbadge" id="rb"></div>
+      <div class="cbar" id="cb"><div class="cfill" id="cf"></div></div>
     </div>
+
+    <!-- Brand -->
     <div class="card">
-      <div class="card-title">Brand Tracker</div>
-      <div class="brand-row">
-        <input type="text" id="brandInput" placeholder="apple, nike, tesla..."/>
-        <button class="btn btn-primary" onclick="trackBrand()">
-          <div class="spinner" id="brandSpinner"></div>Track
-        </button>
+      <div class="ct">Brand Reputation</div>
+      <div class="brow">
+        <input type="text" id="bin" placeholder="apple, tesla, google..."/>
+        <button class="btn bp" onclick="brand()"><div class="spin" id="brs"></div>Track</button>
       </div>
-      <div id="brandResult" style="font-size:.82rem;color:var(--muted)"></div>
+      <div class="ttarea">
+        <div class="ttlabel">PASTE TWEETS ABOUT THIS BRAND (one per line)</div>
+        <textarea id="btweets" rows="4" placeholder="I love Apple products!&#10;Apple support is terrible.&#10;Best iPhone ever..."></textarea>
+      </div>
+      <div id="bres" style="font-size:.82rem;color:var(--muted);margin-top:8px">Enter a brand name and paste tweets above, then click Track.</div>
     </div>
+
   </div>
-  <div class="main-panel">
-    <div class="stats-row">
-      <div class="stat-card"><div class="stat-label">Total Analyzed</div><div class="stat-value accent" id="statTotal">0</div></div>
-      <div class="stat-card"><div class="stat-label">Positive</div><div class="stat-value positive" id="statPos">0</div></div>
-      <div class="stat-card"><div class="stat-label">Negative</div><div class="stat-value negative" id="statNeg">0</div></div>
-      <div class="stat-card"><div class="stat-label">Avg Confidence</div><div class="stat-value neutral" id="statConf">—</div></div>
+
+  <div class="main">
+    <div class="srow">
+      <div class="sc"><div class="sl">Total</div><div class="sv a" id="st">0</div></div>
+      <div class="sc"><div class="sl">Positive</div><div class="sv p" id="sp">0</div></div>
+      <div class="sc"><div class="sl">Negative</div><div class="sv n" id="sn">0</div></div>
+      <div class="sc"><div class="sl">Avg Confidence</div><div class="sv u" id="sc2">—</div></div>
     </div>
-    <div class="charts-grid">
-      <div class="chart-card"><div class="card-title">Sentiment Distribution</div><canvas id="pieChart"></canvas></div>
-      <div class="chart-card"><div class="card-title">Confidence Over Time</div><canvas id="lineChart"></canvas></div>
+    <div class="cgrid">
+      <div class="cc"><div class="ct">Sentiment Distribution</div><canvas id="pie"></canvas></div>
+      <div class="cc"><div class="ct">Confidence Over Time</div><canvas id="line"></canvas></div>
     </div>
-    <div class="history-card">
-      <div class="history-header">
-        <div class="card-title" style="margin:0">Analysis History</div>
-        <button class="btn btn-sm" onclick="clearHistory()">Clear</button>
+    <div class="hcard">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+        <div class="ct" style="margin:0">Analysis History</div>
+        <button class="btn bsm" onclick="clearHist()">Clear</button>
       </div>
-      <div id="historyBody"><div class="empty">Type a sentence above and click Analyze to begin.</div></div>
+      <div id="hb"><div class="empty">Type a sentence above and click Analyze to begin.</div></div>
     </div>
   </div>
 </div>
+
 <div id="toast"></div>
+
 <script>
-const API='https://web-production-53c4b.up.railway.app';
-let hist=[],pieChart,lineChart;
+const API = 'https://web-production-53c4b.up.railway.app';
+let hist = [], pie, line;
 
-function initCharts(){
-  pieChart=new Chart(document.getElementById('pieChart'),{
-    type:'doughnut',
-    data:{labels:['Positive','Negative','Neutral'],datasets:[{data:[0,0,0],backgroundColor:['#00d4aa','#ff6584','#ffd93d'],borderColor:'#1a1a24',borderWidth:3,hoverOffset:6}]},
-    options:{responsive:true,plugins:{legend:{labels:{color:'#7070a0',font:{family:'Space Grotesk',size:12},padding:16}}},cutout:'65%'}
+// ── Charts ──────────────────────────────────────────────────────────────────
+function initCharts() {
+  pie = new Chart(document.getElementById('pie'), {
+    type: 'doughnut',
+    data: { labels: ['Positive','Negative'], datasets: [{ data: [0,0], backgroundColor: ['#00d4aa','#ff6584'], borderColor: '#1a1a24', borderWidth: 3, hoverOffset: 6 }] },
+    options: { responsive: true, plugins: { legend: { labels: { color: '#7070a0', font: { family: 'Space Grotesk', size: 12 }, padding: 16 } } }, cutout: '65%' }
   });
-  lineChart=new Chart(document.getElementById('lineChart'),{
-    type:'line',
-    data:{labels:[],datasets:[{label:'Confidence %',data:[],borderColor:'#6c63ff',backgroundColor:'rgba(108,99,255,0.08)',borderWidth:2,pointBackgroundColor:'#6c63ff',pointRadius:4,tension:0.4,fill:true}]},
-    options:{responsive:true,scales:{x:{ticks:{color:'#7070a0',font:{size:10}},grid:{color:'#2a2a3a'}},y:{min:0,max:100,ticks:{color:'#7070a0',font:{size:10},callback:v=>v+'%'},grid:{color:'#2a2a3a'}}},plugins:{legend:{display:false}}}
+  line = new Chart(document.getElementById('line'), {
+    type: 'line',
+    data: { labels: [], datasets: [{ label: 'Confidence %', data: [], borderColor: '#6c63ff', backgroundColor: 'rgba(108,99,255,0.08)', borderWidth: 2, pointBackgroundColor: '#6c63ff', pointRadius: 4, tension: 0.4, fill: true }] },
+    options: { responsive: true, scales: { x: { ticks: { color: '#7070a0', font: { size: 10 } }, grid: { color: '#2a2a3a' } }, y: { min: 0, max: 100, ticks: { color: '#7070a0', callback: v => v + '%' }, grid: { color: '#2a2a3a' } } }, plugins: { legend: { display: false } } }
   });
 }
 
-async function pingBackend(){
-  spin('pingSpinner',true);
-  try{
-    const r=await fetch(API+'/health',{signal:AbortSignal.timeout(6000)});
-    const d=await r.json();
-    setStatus(true);
-    toast('Connected — '+(d.message||'API healthy'),'success');
-  }catch(e){setStatus(false);toast('Cannot reach backend: '+e.message,'error');}
-  spin('pingSpinner',false);
+// ── Connection ───────────────────────────────────────────────────────────────
+async function ping() {
+  spin('ps', true);
+  try {
+    const r = await fetch(API + '/health', { signal: AbortSignal.timeout(6000) });
+    const d = await r.json();
+    setStatus(d.model_loaded);
+    toast(d.model_loaded ? 'Connected — model loaded ✅' : 'Connected but model not loaded yet', d.model_loaded ? 's' : 'e');
+  } catch(e) { setStatus(false); toast('Cannot reach backend', 'e'); }
+  spin('ps', false);
 }
 
-function setStatus(ok){
-  document.getElementById('statusBadge').className='status-badge'+(ok?' connected':'');
-  document.getElementById('statusText').textContent=ok?'Railway connected':'Disconnected';
+function setStatus(ok) {
+  document.getElementById('badge').className = 'badge' + (ok ? ' on' : '');
+  document.getElementById('btext').textContent = ok ? 'Railway Connected' : 'Not Connected';
 }
 
-async function analyzeTweet(){
-  const text=document.getElementById('tweetInput').value.trim();
-  if(!text){toast('Enter some text first','error');return;}
-  spin('analyzeSpinner',true);
-  const badge=document.getElementById('resultBadge');
-  badge.className='result-badge';
-  try{
-    // POST to /predict/tweet with {text}
-    const r=await fetch(API+'/predict/tweet',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({text}),
-      signal:AbortSignal.timeout(10000)
+// ── Analyze single tweet ─────────────────────────────────────────────────────
+async function analyze() {
+  const text = document.getElementById('tin').value.trim();
+  if (!text) { toast('Enter some text first', 'e'); return; }
+  spin('as', true);
+  const rb = document.getElementById('rb');
+  rb.className = 'rbadge';
+  try {
+    const r = await fetch(API + '/predict/tweet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+      signal: AbortSignal.timeout(10000)
     });
-    if(!r.ok)throw new Error('HTTP '+r.status+' — '+await r.text());
-    const d=await r.json();
-    showResult(d);
-    addHist(text,d);
-    toast('Analysis complete','success');
-  }catch(e){
-    badge.className='result-badge error show';
-    badge.innerHTML='Error: '+e.message;
-    toast('Analysis failed','error');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    // d = { sentiment: "positive"/"negative", confidence: 0-100, original, cleaned }
+    const sent = (d.sentiment || 'negative').toLowerCase();
+    const conf = typeof d.confidence === 'number' ? Math.round(d.confidence) : 75;
+    rb.className = 'rbadge ' + sent + ' show';
+    rb.innerHTML = (sent === 'positive' ? '😊' : '😞') + ' ' + sent.toUpperCase() +
+      ' <span style="font-weight:400;font-size:.85rem;opacity:.7">' + conf + '% confidence</span>';
+    document.getElementById('cb').style.display = 'block';
+    setTimeout(() => document.getElementById('cf').style.width = conf + '%', 60);
+    addHist(text, sent, conf);
+    toast('Analysis complete', 's');
+  } catch(e) {
+    rb.className = 'rbadge err show';
+    rb.innerHTML = '⚠ ' + e.message;
+    toast('Failed: ' + e.message, 'e');
   }
-  spin('analyzeSpinner',false);
+  spin('as', false);
 }
 
-function showResult(d){
-  const badge=document.getElementById('resultBadge');
-  // handle both {sentiment} and {label} response shapes
-  const sent=(d.sentiment||d.label||'NEUTRAL').toUpperCase();
-  const conf=d.confidence?Math.round(d.confidence*100):d.score?Math.round(d.score*100):75;
-  const icons={POSITIVE:'😊',NEGATIVE:'😞',NEUTRAL:'😐'};
-  badge.className='result-badge '+sent.toLowerCase()+' show';
-  badge.innerHTML=(icons[sent]||'🔍')+' '+sent+'&nbsp;<span style="font-weight:400;font-size:.85rem;opacity:.7">'+conf+'% confidence</span>';
-  document.getElementById('confBar').style.display='block';
-  setTimeout(()=>document.getElementById('confFill').style.width=conf+'%',60);
-}
-
-async function trackBrand(){
-  const brand=document.getElementById('brandInput').value.trim();
-  if(!brand){toast('Enter a brand name','error');return;}
-  spin('brandSpinner',true);
-  const el=document.getElementById('brandResult');
-  el.innerHTML='<span style="color:var(--muted)">Analyzing '+brand+'...</span>';
-  try{
-    // POST to /analyze/brand with {keyword, tweets:[]}
-    const r=await fetch(API+'/analyze/brand',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({keyword:brand,tweets:[]}),
-      signal:AbortSignal.timeout(20000)
+// ── Brand analysis ───────────────────────────────────────────────────────────
+async function brand() {
+  const keyword = document.getElementById('bin').value.trim();
+  const tweetsRaw = document.getElementById('btweets').value.trim();
+  if (!keyword) { toast('Enter a brand name', 'e'); return; }
+  if (!tweetsRaw) { toast('Paste some tweets first (one per line)', 'e'); return; }
+  const tweets = tweetsRaw.split('\n').map(t => t.trim()).filter(Boolean);
+  if (!tweets.length) { toast('No valid tweets found', 'e'); return; }
+  spin('brs', true);
+  const el = document.getElementById('bres');
+  el.innerHTML = '<span style="color:var(--muted)">Analyzing ' + tweets.length + ' tweets for "' + keyword + '"...</span>';
+  try {
+    const r = await fetch(API + '/analyze/brand', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ keyword, tweets, limit: 500 }),
+      signal: AbortSignal.timeout(30000)
     });
-    if(!r.ok)throw new Error('HTTP '+r.status+' — '+await r.text());
-    const d=await r.json();
-    const score=Math.round(d.score||d.reputation_score||d.positive_percent||0);
-    const col=score>=60?'var(--positive)':score>=40?'var(--neutral)':'var(--negative)';
-    el.innerHTML=
-      '<div class="brand-stats">'+
-        '<div class="brand-row-stat"><span style="color:var(--muted)">Brand</span><strong>'+brand.toUpperCase()+'</strong></div>'+
-        '<div class="brand-row-stat"><span style="color:var(--muted)">Mentions</span><span>'+(d.total||d.total_tweets||0)+'</span></div>'+
-        '<div class="brand-row-stat"><span style="color:var(--muted)">Positive</span><span style="color:var(--positive)">'+(d.positive||d.positive_count||0)+'</span></div>'+
-        '<div class="brand-row-stat"><span style="color:var(--muted)">Negative</span><span style="color:var(--negative)">'+(d.negative||d.negative_count||0)+'</span></div>'+
-        '<div class="brand-row-stat" style="align-items:center"><span style="color:var(--muted)">Reputation</span><span style="font-size:1.3rem;font-weight:700;color:'+col+'">'+score+'/100</span></div>'+
-        '<div style="height:5px;background:var(--border);border-radius:3px"><div style="height:100%;width:'+score+'%;background:'+col+';border-radius:3px;transition:width .7s ease"></div></div>'+
+    if (!r.ok) {
+      const err = await r.json();
+      throw new Error(err.detail || 'HTTP ' + r.status);
+    }
+    const d = await r.json();
+    // d = { brand, total_mentions, positive, negative, reputation_score, sentiment_pct, top_positive_words }
+    const score = d.reputation_score || 0;
+    const col = score >= 60 ? 'var(--pos)' : score >= 40 ? 'var(--neu)' : 'var(--neg)';
+    el.innerHTML =
+      '<div class="bstats">' +
+        '<div class="bstat"><span style="color:var(--muted)">Brand</span><strong>' + d.brand.toUpperCase() + '</strong></div>' +
+        '<div class="bstat"><span style="color:var(--muted)">Tweets Analyzed</span><span>' + d.total_mentions + '</span></div>' +
+        '<div class="bstat"><span style="color:var(--muted)">Positive</span><span style="color:var(--pos)">' + d.positive + ' (' + d.sentiment_pct.positive + '%)</span></div>' +
+        '<div class="bstat"><span style="color:var(--muted)">Negative</span><span style="color:var(--neg)">' + d.negative + ' (' + d.sentiment_pct.negative + '%)</span></div>' +
+        '<div class="bstat" style="align-items:center"><span style="color:var(--muted)">Reputation Score</span>' +
+          '<span style="font-size:1.4rem;font-weight:800;color:' + col + '">' + score + '/100</span></div>' +
+        '<div style="height:6px;background:var(--border);border-radius:3px;margin-top:4px">' +
+          '<div style="height:100%;width:' + score + '%;background:' + col + ';border-radius:3px;transition:width .8s ease"></div>' +
+        '</div>' +
+        (d.top_positive_words && d.top_positive_words.length ?
+          '<div style="margin-top:8px;font-size:.7rem;color:var(--muted)">TOP POSITIVE WORDS: ' +
+          d.top_positive_words.slice(0,5).map(w => '<span style="color:var(--pos)">' + w.word + '</span>').join(', ') +
+          '</div>' : '') +
       '</div>';
-    toast('Brand report ready','success');
-  }catch(e){
-    el.innerHTML='<span style="color:var(--negative)">Error: '+e.message+'</span>';
-    toast('Brand lookup failed','error');
+    toast('Brand report ready ✅', 's');
+  } catch(e) {
+    el.innerHTML = '<span style="color:var(--neg)">⚠ ' + e.message + '</span>';
+    toast('Brand analysis failed: ' + e.message, 'e');
   }
-  spin('brandSpinner',false);
+  spin('brs', false);
 }
 
-function addHist(text,d){
-  const sent=(d.sentiment||d.label||'NEUTRAL').toUpperCase();
-  const conf=d.confidence?Math.round(d.confidence*100):d.score?Math.round(d.score*100):75;
-  hist.unshift({text,sent,conf,time:new Date().toLocaleTimeString()});
-  if(hist.length>100)hist.pop();
-  renderHist();updateStats();updateCharts();
+// ── History ──────────────────────────────────────────────────────────────────
+function addHist(text, sent, conf) {
+  hist.unshift({ text, sent, conf, time: new Date().toLocaleTimeString() });
+  if (hist.length > 100) hist.pop();
+  renderHist(); updateStats(); updateCharts();
 }
 
-function renderHist(){
-  const el=document.getElementById('historyBody');
-  if(!hist.length){el.innerHTML='<div class="empty">No analyses yet.</div>';return;}
-  el.innerHTML='<table><thead><tr><th>Time</th><th>Text</th><th>Sentiment</th><th>Confidence</th></tr></thead><tbody>'+
-    hist.map(h=>
-      '<tr>'+
-      '<td style="color:var(--muted);font-family:JetBrains Mono,monospace;font-size:.74rem;white-space:nowrap">'+h.time+'</td>'+
-      '<td><div class="tweet-cell">'+h.text.replace(/</g,'&lt;')+'</div></td>'+
-      '<td><span class="pill '+h.sent.toLowerCase()+'">'+h.sent+'</span></td>'+
-      '<td style="font-family:JetBrains Mono,monospace;font-size:.82rem;color:var(--accent2)">'+h.conf+'%</td>'+
+function renderHist() {
+  const el = document.getElementById('hb');
+  if (!hist.length) { el.innerHTML = '<div class="empty">No analyses yet.</div>'; return; }
+  el.innerHTML = '<table><thead><tr><th>Time</th><th>Text</th><th>Sentiment</th><th>Confidence</th></tr></thead><tbody>' +
+    hist.map(h =>
+      '<tr>' +
+      '<td style="color:var(--muted);font-family:JetBrains Mono,monospace;font-size:.74rem;white-space:nowrap">' + h.time + '</td>' +
+      '<td><div class="tc">' + h.text.replace(/</g, '&lt;') + '</div></td>' +
+      '<td><span class="pill ' + h.sent + '">' + h.sent.toUpperCase() + '</span></td>' +
+      '<td style="font-family:JetBrains Mono,monospace;font-size:.82rem;color:var(--accent2)">' + h.conf + '%</td>' +
       '</tr>'
-    ).join('')+'</tbody></table>';
+    ).join('') + '</tbody></table>';
 }
 
-function clearHistory(){hist=[];renderHist();updateStats();updateCharts();toast('History cleared','info');}
+function clearHist() { hist = []; renderHist(); updateStats(); updateCharts(); toast('Cleared', 'i'); }
 
-function updateStats(){
-  const t=hist.length,p=hist.filter(h=>h.sent==='POSITIVE').length,n=hist.filter(h=>h.sent==='NEGATIVE').length;
-  const a=t?Math.round(hist.reduce((s,h)=>s+h.conf,0)/t):0;
-  document.getElementById('statTotal').textContent=t;
-  document.getElementById('statPos').textContent=p;
-  document.getElementById('statNeg').textContent=n;
-  document.getElementById('statConf').textContent=t?a+'%':'—';
+function updateStats() {
+  const t = hist.length, p = hist.filter(h => h.sent === 'positive').length, n = hist.filter(h => h.sent === 'negative').length;
+  const a = t ? Math.round(hist.reduce((s, h) => s + h.conf, 0) / t) : 0;
+  document.getElementById('st').textContent = t;
+  document.getElementById('sp').textContent = p;
+  document.getElementById('sn').textContent = n;
+  document.getElementById('sc2').textContent = t ? a + '%' : '—';
 }
 
-function updateCharts(){
-  pieChart.data.datasets[0].data=[
-    hist.filter(h=>h.sent==='POSITIVE').length,
-    hist.filter(h=>h.sent==='NEGATIVE').length,
-    hist.filter(h=>h.sent==='NEUTRAL').length
-  ];
-  pieChart.update();
-  const last=hist.slice(0,20).reverse();
-  lineChart.data.labels=last.map((_,i)=>'#'+(i+1));
-  lineChart.data.datasets[0].data=last.map(h=>h.conf);
-  lineChart.update();
+function updateCharts() {
+  pie.data.datasets[0].data = [hist.filter(h => h.sent === 'positive').length, hist.filter(h => h.sent === 'negative').length];
+  pie.update();
+  const last = hist.slice(0, 20).reverse();
+  line.data.labels = last.map((_, i) => '#' + (i + 1));
+  line.data.datasets[0].data = last.map(h => h.conf);
+  line.update();
 }
 
-function clearInput(){
-  document.getElementById('tweetInput').value='';
-  document.getElementById('resultBadge').className='result-badge';
-  document.getElementById('confBar').style.display='none';
-  document.getElementById('confFill').style.width='0';
+function clearIn() {
+  document.getElementById('tin').value = '';
+  document.getElementById('rb').className = 'rbadge';
+  document.getElementById('cb').style.display = 'none';
+  document.getElementById('cf').style.width = '0';
 }
 
-function spin(id,on){document.getElementById(id).style.display=on?'block':'none';}
+function spin(id, on) { document.getElementById(id).style.display = on ? 'block' : 'none'; }
 
-function toast(msg,type){
-  const el=document.getElementById('toast');
-  el.textContent=msg;
-  el.className='show '+(type||'info');
+function toast(msg, type) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + (type || 'i');
   clearTimeout(el._t);
-  el._t=setTimeout(()=>{el.className='';},3200);
+  el._t = setTimeout(() => { el.className = ''; }, 3000);
 }
 
 initCharts();
-pingBackend();
+ping();
 </script>
 </body>
 </html>
