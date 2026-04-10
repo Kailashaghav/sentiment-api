@@ -24,12 +24,9 @@
   .card-title{font-size:.72rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
   .url-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-family:'JetBrains Mono',monospace;font-size:.73rem;color:var(--accent2);word-break:break-all;margin-bottom:10px}
   .btn{padding:10px 18px;border-radius:10px;border:none;font-family:'Space Grotesk',sans-serif;font-size:.85rem;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;width:100%}
-  .btn-primary{background:var(--accent);color:#fff}
-  .btn-primary:hover{background:#7d75ff;transform:translateY(-1px)}
-  .btn-success{background:var(--accent2);color:#000;font-weight:700}
-  .btn-success:hover{background:#00e8bb;transform:translateY(-1px)}
-  .btn-sm{background:transparent;color:var(--text);border:1px solid var(--border);width:auto;padding:8px 14px;font-size:.78rem}
-  .btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#7d75ff;transform:translateY(-1px)}
+  .btn-success{background:var(--accent2);color:#000;font-weight:700}.btn-success:hover{background:#00e8bb;transform:translateY(-1px)}
+  .btn-sm{background:transparent;color:var(--text);border:1px solid var(--border);width:auto;padding:8px 14px;font-size:.78rem}.btn-sm:hover{border-color:var(--accent);color:var(--accent)}
   textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:.9rem;resize:vertical;min-height:100px;outline:none;transition:border-color .2s}
   textarea:focus{border-color:var(--accent)}
   input[type=text]{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:.82rem;outline:none;transition:border-color .2s;width:100%}
@@ -69,8 +66,7 @@
   #toast.error{background:rgba(255,101,132,.15);border:1px solid var(--negative);color:var(--negative)}
   #toast.info{background:rgba(108,99,255,.15);border:1px solid var(--accent);color:var(--accent)}
   .brand-row{display:flex;gap:8px;margin-bottom:10px}
-  .brand-row input{flex:1}
-  .brand-row .btn{width:auto;padding:10px 14px}
+  .brand-row input{flex:1}.brand-row .btn{width:auto;padding:10px 14px}
   .brand-stats{display:flex;flex-direction:column;gap:7px;margin-top:6px}
   .brand-row-stat{display:flex;justify-content:space-between;font-size:.82rem}
   @media(max-width:900px){.container{grid-template-columns:1fr}.stats-row{grid-template-columns:repeat(2,1fr)}.charts-grid{grid-template-columns:1fr}}
@@ -140,20 +136,36 @@
 <script>
 const API='https://web-production-53c4b.up.railway.app';
 let hist=[],pieChart,lineChart;
+
 function initCharts(){
-  pieChart=new Chart(document.getElementById('pieChart'),{type:'doughnut',data:{labels:['Positive','Negative','Neutral'],datasets:[{data:[0,0,0],backgroundColor:['#00d4aa','#ff6584','#ffd93d'],borderColor:'#1a1a24',borderWidth:3,hoverOffset:6}]},options:{responsive:true,plugins:{legend:{labels:{color:'#7070a0',font:{family:'Space Grotesk',size:12},padding:16}}},cutout:'65%'}});
-  lineChart=new Chart(document.getElementById('lineChart'),{type:'line',data:{labels:[],datasets:[{label:'Confidence %',data:[],borderColor:'#6c63ff',backgroundColor:'rgba(108,99,255,0.08)',borderWidth:2,pointBackgroundColor:'#6c63ff',pointRadius:4,tension:0.4,fill:true}]},options:{responsive:true,scales:{x:{ticks:{color:'#7070a0',font:{size:10}},grid:{color:'#2a2a3a'}},y:{min:0,max:100,ticks:{color:'#7070a0',font:{size:10},callback:v=>v+'%'},grid:{color:'#2a2a3a'}}},plugins:{legend:{display:false}}}});
+  pieChart=new Chart(document.getElementById('pieChart'),{
+    type:'doughnut',
+    data:{labels:['Positive','Negative','Neutral'],datasets:[{data:[0,0,0],backgroundColor:['#00d4aa','#ff6584','#ffd93d'],borderColor:'#1a1a24',borderWidth:3,hoverOffset:6}]},
+    options:{responsive:true,plugins:{legend:{labels:{color:'#7070a0',font:{family:'Space Grotesk',size:12},padding:16}}},cutout:'65%'}
+  });
+  lineChart=new Chart(document.getElementById('lineChart'),{
+    type:'line',
+    data:{labels:[],datasets:[{label:'Confidence %',data:[],borderColor:'#6c63ff',backgroundColor:'rgba(108,99,255,0.08)',borderWidth:2,pointBackgroundColor:'#6c63ff',pointRadius:4,tension:0.4,fill:true}]},
+    options:{responsive:true,scales:{x:{ticks:{color:'#7070a0',font:{size:10}},grid:{color:'#2a2a3a'}},y:{min:0,max:100,ticks:{color:'#7070a0',font:{size:10},callback:v=>v+'%'},grid:{color:'#2a2a3a'}}},plugins:{legend:{display:false}}}
+  });
 }
+
 async function pingBackend(){
   spin('pingSpinner',true);
-  try{const r=await fetch(API+'/',{signal:AbortSignal.timeout(6000)});const d=await r.json();setStatus(true);toast('Connected — '+(d.message||'API running'),'success');}
-  catch(e){setStatus(false);toast('Cannot reach backend: '+e.message,'error');}
+  try{
+    const r=await fetch(API+'/health',{signal:AbortSignal.timeout(6000)});
+    const d=await r.json();
+    setStatus(true);
+    toast('Connected — '+(d.message||'API healthy'),'success');
+  }catch(e){setStatus(false);toast('Cannot reach backend: '+e.message,'error');}
   spin('pingSpinner',false);
 }
+
 function setStatus(ok){
   document.getElementById('statusBadge').className='status-badge'+(ok?' connected':'');
-  document.getElementById('statusText').textContent=ok?'web-production-53c4b.up.railway.app':'Disconnected';
+  document.getElementById('statusText').textContent=ok?'Railway connected':'Disconnected';
 }
+
 async function analyzeTweet(){
   const text=document.getElementById('tweetInput').value.trim();
   if(!text){toast('Enter some text first','error');return;}
@@ -161,23 +173,38 @@ async function analyzeTweet(){
   const badge=document.getElementById('resultBadge');
   badge.className='result-badge';
   try{
-    const r=await fetch(API+'/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text}),signal:AbortSignal.timeout(10000)});
+    // POST to /predict/tweet with {text}
+    const r=await fetch(API+'/predict/tweet',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({text}),
+      signal:AbortSignal.timeout(10000)
+    });
     if(!r.ok)throw new Error('HTTP '+r.status+' — '+await r.text());
     const d=await r.json();
-    showResult(d);addHist(text,d);toast('Analysis complete','success');
-  }catch(e){badge.className='result-badge error show';badge.innerHTML='Error: '+e.message;toast('Failed — check Railway logs','error');}
+    showResult(d);
+    addHist(text,d);
+    toast('Analysis complete','success');
+  }catch(e){
+    badge.className='result-badge error show';
+    badge.innerHTML='Error: '+e.message;
+    toast('Analysis failed','error');
+  }
   spin('analyzeSpinner',false);
 }
+
 function showResult(d){
   const badge=document.getElementById('resultBadge');
+  // handle both {sentiment} and {label} response shapes
   const sent=(d.sentiment||d.label||'NEUTRAL').toUpperCase();
-  const conf=d.confidence?Math.round(d.confidence*100):75;
+  const conf=d.confidence?Math.round(d.confidence*100):d.score?Math.round(d.score*100):75;
   const icons={POSITIVE:'😊',NEGATIVE:'😞',NEUTRAL:'😐'};
   badge.className='result-badge '+sent.toLowerCase()+' show';
   badge.innerHTML=(icons[sent]||'🔍')+' '+sent+'&nbsp;<span style="font-weight:400;font-size:.85rem;opacity:.7">'+conf+'% confidence</span>';
   document.getElementById('confBar').style.display='block';
   setTimeout(()=>document.getElementById('confFill').style.width=conf+'%',60);
 }
+
 async function trackBrand(){
   const brand=document.getElementById('brandInput').value.trim();
   if(!brand){toast('Enter a brand name','error');return;}
@@ -185,48 +212,99 @@ async function trackBrand(){
   const el=document.getElementById('brandResult');
   el.innerHTML='<span style="color:var(--muted)">Analyzing '+brand+'...</span>';
   try{
-    const r=await fetch(API+'/brand?keyword='+encodeURIComponent(brand),{signal:AbortSignal.timeout(15000)});
-    if(!r.ok)throw new Error('HTTP '+r.status);
+    // POST to /analyze/brand with {keyword, tweets:[]}
+    const r=await fetch(API+'/analyze/brand',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({keyword:brand,tweets:[]}),
+      signal:AbortSignal.timeout(20000)
+    });
+    if(!r.ok)throw new Error('HTTP '+r.status+' — '+await r.text());
     const d=await r.json();
-    const score=d.score||d.reputation_score||0;
+    const score=Math.round(d.score||d.reputation_score||d.positive_percent||0);
     const col=score>=60?'var(--positive)':score>=40?'var(--neutral)':'var(--negative)';
-    el.innerHTML='<div class="brand-stats"><div class="brand-row-stat"><span style="color:var(--muted)">Brand</span><strong>'+brand.toUpperCase()+'</strong></div><div class="brand-row-stat"><span style="color:var(--muted)">Mentions</span><span>'+(d.total||0)+'</span></div><div class="brand-row-stat"><span style="color:var(--muted)">Positive</span><span style="color:var(--positive)">'+(d.positive||0)+'</span></div><div class="brand-row-stat"><span style="color:var(--muted)">Negative</span><span style="color:var(--negative)">'+(d.negative||0)+'</span></div><div class="brand-row-stat" style="align-items:center"><span style="color:var(--muted)">Reputation</span><span style="font-size:1.3rem;font-weight:700;color:'+col+'">'+score+'/100</span></div><div style="height:5px;background:var(--border);border-radius:3px"><div style="height:100%;width:'+score+'%;background:'+col+';border-radius:3px;transition:width .7s ease"></div></div></div>';
+    el.innerHTML=
+      '<div class="brand-stats">'+
+        '<div class="brand-row-stat"><span style="color:var(--muted)">Brand</span><strong>'+brand.toUpperCase()+'</strong></div>'+
+        '<div class="brand-row-stat"><span style="color:var(--muted)">Mentions</span><span>'+(d.total||d.total_tweets||0)+'</span></div>'+
+        '<div class="brand-row-stat"><span style="color:var(--muted)">Positive</span><span style="color:var(--positive)">'+(d.positive||d.positive_count||0)+'</span></div>'+
+        '<div class="brand-row-stat"><span style="color:var(--muted)">Negative</span><span style="color:var(--negative)">'+(d.negative||d.negative_count||0)+'</span></div>'+
+        '<div class="brand-row-stat" style="align-items:center"><span style="color:var(--muted)">Reputation</span><span style="font-size:1.3rem;font-weight:700;color:'+col+'">'+score+'/100</span></div>'+
+        '<div style="height:5px;background:var(--border);border-radius:3px"><div style="height:100%;width:'+score+'%;background:'+col+';border-radius:3px;transition:width .7s ease"></div></div>'+
+      '</div>';
     toast('Brand report ready','success');
-  }catch(e){el.innerHTML='<span style="color:var(--negative)">Error: '+e.message+'</span>';toast('Brand lookup failed','error');}
+  }catch(e){
+    el.innerHTML='<span style="color:var(--negative)">Error: '+e.message+'</span>';
+    toast('Brand lookup failed','error');
+  }
   spin('brandSpinner',false);
 }
+
 function addHist(text,d){
   const sent=(d.sentiment||d.label||'NEUTRAL').toUpperCase();
-  const conf=d.confidence?Math.round(d.confidence*100):75;
+  const conf=d.confidence?Math.round(d.confidence*100):d.score?Math.round(d.score*100):75;
   hist.unshift({text,sent,conf,time:new Date().toLocaleTimeString()});
   if(hist.length>100)hist.pop();
   renderHist();updateStats();updateCharts();
 }
+
 function renderHist(){
   const el=document.getElementById('historyBody');
   if(!hist.length){el.innerHTML='<div class="empty">No analyses yet.</div>';return;}
-  el.innerHTML='<table><thead><tr><th>Time</th><th>Text</th><th>Sentiment</th><th>Confidence</th></tr></thead><tbody>'+hist.map(h=>'<tr><td style="color:var(--muted);font-family:JetBrains Mono,monospace;font-size:.74rem;white-space:nowrap">'+h.time+'</td><td><div class="tweet-cell">'+h.text.replace(/</g,'&lt;')+'</div></td><td><span class="pill '+h.sent.toLowerCase()+'">'+h.sent+'</span></td><td style="font-family:JetBrains Mono,monospace;font-size:.82rem;color:var(--accent2)">'+h.conf+'%</td></tr>').join('')+'</tbody></table>';
+  el.innerHTML='<table><thead><tr><th>Time</th><th>Text</th><th>Sentiment</th><th>Confidence</th></tr></thead><tbody>'+
+    hist.map(h=>
+      '<tr>'+
+      '<td style="color:var(--muted);font-family:JetBrains Mono,monospace;font-size:.74rem;white-space:nowrap">'+h.time+'</td>'+
+      '<td><div class="tweet-cell">'+h.text.replace(/</g,'&lt;')+'</div></td>'+
+      '<td><span class="pill '+h.sent.toLowerCase()+'">'+h.sent+'</span></td>'+
+      '<td style="font-family:JetBrains Mono,monospace;font-size:.82rem;color:var(--accent2)">'+h.conf+'%</td>'+
+      '</tr>'
+    ).join('')+'</tbody></table>';
 }
+
 function clearHistory(){hist=[];renderHist();updateStats();updateCharts();toast('History cleared','info');}
+
 function updateStats(){
-  const t=hist.length,p=hist.filter(h=>h.sent==='POSITIVE').length,n=hist.filter(h=>h.sent==='NEGATIVE').length,a=t?Math.round(hist.reduce((s,h)=>s+h.conf,0)/t):0;
+  const t=hist.length,p=hist.filter(h=>h.sent==='POSITIVE').length,n=hist.filter(h=>h.sent==='NEGATIVE').length;
+  const a=t?Math.round(hist.reduce((s,h)=>s+h.conf,0)/t):0;
   document.getElementById('statTotal').textContent=t;
   document.getElementById('statPos').textContent=p;
   document.getElementById('statNeg').textContent=n;
   document.getElementById('statConf').textContent=t?a+'%':'—';
 }
+
 function updateCharts(){
-  pieChart.data.datasets[0].data=[hist.filter(h=>h.sent==='POSITIVE').length,hist.filter(h=>h.sent==='NEGATIVE').length,hist.filter(h=>h.sent==='NEUTRAL').length];
+  pieChart.data.datasets[0].data=[
+    hist.filter(h=>h.sent==='POSITIVE').length,
+    hist.filter(h=>h.sent==='NEGATIVE').length,
+    hist.filter(h=>h.sent==='NEUTRAL').length
+  ];
   pieChart.update();
   const last=hist.slice(0,20).reverse();
   lineChart.data.labels=last.map((_,i)=>'#'+(i+1));
   lineChart.data.datasets[0].data=last.map(h=>h.conf);
   lineChart.update();
 }
-function clearInput(){document.getElementById('tweetInput').value='';document.getElementById('resultBadge').className='result-badge';document.getElementById('confBar').style.display='none';document.getElementById('confFill').style.width='0';}
+
+function clearInput(){
+  document.getElementById('tweetInput').value='';
+  document.getElementById('resultBadge').className='result-badge';
+  document.getElementById('confBar').style.display='none';
+  document.getElementById('confFill').style.width='0';
+}
+
 function spin(id,on){document.getElementById(id).style.display=on?'block':'none';}
-function toast(msg,type){const el=document.getElementById('toast');el.textContent=msg;el.className='show '+(type||'info');clearTimeout(el._t);el._t=setTimeout(()=>{el.className='';},3200);}
-initCharts();pingBackend();
+
+function toast(msg,type){
+  const el=document.getElementById('toast');
+  el.textContent=msg;
+  el.className='show '+(type||'info');
+  clearTimeout(el._t);
+  el._t=setTimeout(()=>{el.className='';},3200);
+}
+
+initCharts();
+pingBackend();
 </script>
 </body>
 </html>
